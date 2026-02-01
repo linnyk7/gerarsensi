@@ -6,28 +6,39 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import type { System, Sensitivity, LoginData, GeneratedSettings, AndroidSettings, IosSettings } from '@/lib/types';
 import { generateSettings } from '@/lib/sensitivity-generator';
 import { useCooldown } from '@/hooks/use-cooldown';
 import { AnimatedSlider } from '@/components/animated-slider';
-import { Smartphone, Apple, Terminal } from 'lucide-react';
+import { Smartphone, Apple, Terminal, LogOut } from 'lucide-react';
 
 type AppStep = 'login' | 'loading' | 'system_select' | 'sensitivity_select' | 'generating' | 'results';
 
 const IPHONE_MODELS = [
-    "iPhone 15 Pro Max", "iPhone 15 Pro", "iPhone 15 Plus", "iPhone 15",
-    "iPhone 14 Pro Max", "iPhone 14 Pro", "iPhone 14 Plus", "iPhone 14",
-    "iPhone 13 Pro Max", "iPhone 13 Pro", "iPhone 13", "iPhone 13 mini",
-    "iPhone SE (3rd generation)",
-    "iPhone 12 Pro Max", "iPhone 12 Pro", "iPhone 12", "iPhone 12 mini",
-    "iPhone 11 Pro Max", "iPhone 11 Pro", "iPhone 11",
+    "iPhone 7", "iPhone 7 Plus",
+    "iPhone 8", "iPhone 8 Plus",
+    "iPhone X", "iPhone XR", "iPhone XS", "iPhone XS Max",
+    "iPhone 11", "iPhone 11 Pro", "iPhone 11 Pro Max",
     "iPhone SE (2nd generation)",
-    "iPhone XS Max", "iPhone XS", "iPhone XR",
-    "iPhone X",
-    "iPhone 8 Plus", "iPhone 8",
-    "iPhone 7 Plus", "iPhone 7",
+    "iPhone 12", "iPhone 12 mini", "iPhone 12 Pro", "iPhone 12 Pro Max",
+    "iPhone 13", "iPhone 13 mini", "iPhone 13 Pro", "iPhone 13 Pro Max",
+    "iPhone SE (3rd generation)",
+    "iPhone 14", "iPhone 14 Plus", "iPhone 14 Pro", "iPhone 14 Pro Max",
+    "iPhone 15", "iPhone 15 Plus", "iPhone 15 Pro", "iPhone 15 Pro Max",
 ];
+
 
 const COOLDOWN_DURATION = 5 * 60 * 1000; // 5 minutes
 
@@ -52,6 +63,7 @@ export default function AppFlow() {
     const [system, setSystem] = useState<System | null>(null);
     const [sensitivity, setSensitivity] = useState<Sensitivity | null>(null);
     const [generatedSettings, setGeneratedSettings] = useState<GeneratedSettings | null>(null);
+    const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
     const { toast } = useToast();
     const { isCoolingDown, remainingTime, startCooldown } = useCooldown(COOLDOWN_DURATION);
 
@@ -92,6 +104,16 @@ export default function AppFlow() {
     const handleSelectSensitivity = (selectedSensitivity: Sensitivity) => {
         setSensitivity(selectedSensitivity);
     };
+    
+    const handleLogout = () => {
+        setStep('login');
+        setLoginData(null);
+        setSystem(null);
+        setSensitivity(null);
+        setGeneratedSettings(null);
+        setIsLogoutModalOpen(false);
+    };
+
 
     const handleGenerate = () => {
         if (!system || !sensitivity) {
@@ -272,5 +294,34 @@ export default function AppFlow() {
         }
     };
 
-    return <div className="w-full">{renderStep()}</div>;
+    return (
+        <div className="w-full">
+            {step !== 'login' && (
+                <AlertDialog open={isLogoutModalOpen} onOpenChange={setIsLogoutModalOpen}>
+                    <AlertDialogTrigger asChild>
+                        <button className="fixed top-6 left-6 text-white/70 hover:text-primary/90 hover:opacity-100 transition-all z-30">
+                            <LogOut className="h-6 w-6" />
+                        </button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="bg-card border-primary/50">
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Deseja voltar para a tela de login?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Sua sessão atual será encerrada e você precisará inserir a senha novamente.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel asChild>
+                                <Button variant="outline" onClick={() => setIsLogoutModalOpen(false)}>Cancelar</Button>
+                            </AlertDialogCancel>
+                            <AlertDialogAction asChild>
+                                <Button onClick={handleLogout} className="bg-primary hover:bg-primary/90">Voltar</Button>
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            )}
+            {renderStep()}
+        </div>
+    );
 }
