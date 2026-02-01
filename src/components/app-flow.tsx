@@ -110,7 +110,7 @@ export default function AppFlow() {
     const [system, setSystem] = useState<System | null>(null);
     const [sensitivity, setSensitivity] = useState<Sensitivity | null>(null);
     
-    // New states for advanced iOS settings
+    // New states for advanced iOS settings - default to 'medio'
     const [mouseKeys, setMouseKeys] = useState<AdvancedSensitivity>('medio');
     const [trackingSensitivity, setTrackingSensitivity] = useState<AdvancedSensitivity>('medio');
     const [movementTolerance, setMovementTolerance] = useState<AdvancedSensitivity>('medio');
@@ -199,11 +199,8 @@ export default function AppFlow() {
     };
 
     const handleGenerate = () => {
-        const isIos = system === 'ios';
-        const canGenerate = (system === 'android' && sensitivity) || (isIos && sensitivity && mouseKeys && trackingSensitivity && movementTolerance);
-
-        if (!canGenerate) {
-            toast({ title: "Erro", description: "Por favor, selecione todas as opções.", variant: "destructive" });
+        if (!sensitivity) {
+            toast({ title: "Erro", description: "Por favor, selecione uma sensibilidade.", variant: "destructive" });
             return;
         }
 
@@ -212,8 +209,8 @@ export default function AppFlow() {
             return;
         }
         
-        const settings = isIos
-            ? generateSettings(system, sensitivity!, { mouseKeys, trackingSensitivity, movementTolerance })
+        const settings = system === 'ios'
+            ? generateSettings(system, sensitivity, { mouseKeys, trackingSensitivity, movementTolerance })
             : generateSettings(system!, sensitivity!);
         
         setGeneratedSettings(settings);
@@ -289,9 +286,7 @@ export default function AppFlow() {
                 return <LoadingScreen message={loadingMessage} />;
 
             case 'sensitivity_select':
-                const isIos = system === 'ios';
-                const allIosOptionsSelected = isIos && sensitivity && mouseKeys && trackingSensitivity && movementTolerance;
-                const canGenerate = (system === 'android' && sensitivity) || allIosOptionsSelected;
+                const canGenerate = !!sensitivity;
 
                 return(
                     <div className="space-y-6 text-center">
@@ -321,33 +316,7 @@ export default function AppFlow() {
                                 </Card>
                             ))}
                         </div>
-
-                        {isIos && sensitivity && (
-                            <div className="space-y-4 pt-4 border-t border-border/20">
-                                <AdvancedSettingSelector
-                                    title="Teclas do Mouse"
-                                    description="Ajusta a resposta do clique e micro-movimentos da mira."
-                                    value={mouseKeys}
-                                    onValueChange={setMouseKeys}
-                                    options={['minimo', 'medio', 'maximo']}
-                                />
-                                <AdvancedSettingSelector
-                                    title="Sensibilidade de Rastreamento"
-                                    description="Define a precisão ao seguir o alvo em movimento."
-                                    value={trackingSensitivity}
-                                    onValueChange={setTrackingSensitivity}
-                                    options={['minimo', 'medio', 'maximo']}
-                                />
-                                <AdvancedSettingSelector
-                                    title="Tolerância de Movimento"
-                                    description="Controla o quanto a mira absorve movimentos bruscos."
-                                    value={movementTolerance}
-                                    onValueChange={setMovementTolerance}
-                                    options={['minimo', 'medio', 'maximo']}
-                                />
-                            </div>
-                        )}
-
+                        
                          <Button onClick={handleGenerate} disabled={!canGenerate} className="w-full text-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground py-6 box-glow disabled:opacity-50 disabled:cursor-not-allowed active:scale-95">
                             {isCoolingDown ? `Aguarde ${formatTime(remainingTime)}` : "GERAR SENSIBILIDADE"}
                         </Button>
@@ -471,7 +440,7 @@ export default function AppFlow() {
                         <CheckCircle className="h-10 w-10 text-primary mb-2" />
                         <AlertDialogTitle>Sensibilidade gerada com sucesso.</AlertDialogTitle>
                         <AlertDialogDescription>
-                           Agora basta aplicar as configurações no seu telefone, abrir o Free Fire e jogar.
+                           Após gerar a sensibilidade, configure os valores em seu {system === 'ios' ? 'iPhone' : 'dispositivo'}, abra o Free Fire e jogue.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
