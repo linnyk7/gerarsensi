@@ -14,12 +14,12 @@ const AnimatedBackground = () => {
 
     let w = canvas.width = window.innerWidth;
     let h = canvas.height = window.innerHeight;
-    
-    const fontSize = 30; // Increased for lower density
 
-    const handleResize = () => {
-      w = canvas.width = window.innerWidth;
-      h = canvas.height = window.innerHeight;
+    const fontSize = 16;
+    let columns = Math.floor(w / fontSize);
+    let drops: number[] = [];
+
+    const setupDrops = () => {
       columns = Math.floor(w / fontSize);
       drops = [];
       for (let i = 0; i < columns; i++) {
@@ -27,42 +27,44 @@ const AnimatedBackground = () => {
         drops[i] = Math.floor(Math.random() * (h/fontSize));
       }
     };
+
+    const handleResize = () => {
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+      setupDrops();
+    };
     
     window.addEventListener('resize', handleResize);
+    setupDrops();
 
-    let columns = Math.floor(w / fontSize);
-    let drops: number[] = [];
-    for (let i = 0; i < columns; i++) {
-        drops[i] = Math.floor(Math.random() * (h/fontSize));
-    }
-
-    const str = "0123456789";
+    const characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     let intervalId: ReturnType<typeof setInterval>;
 
     function draw() {
-      // Solid black background with low opacity for a subtle trail effect, creating a "living texture"
+      // Semi-transparent black background to create the fading trail effect
       ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
       ctx.fillRect(0, 0, w, h);
       
-      // Soft pink color for the text
-      ctx.fillStyle = 'hsl(330, 60%, 70%)';
+      // Use the theme's primary color, which is a strong pink
+      ctx.fillStyle = 'hsl(330, 100%, 50%)';
       ctx.font = `${fontSize}px monospace`;
 
       for (let i = 0; i < drops.length; i++) {
-        const text = str[Math.floor(Math.random() * str.length)];
+        const text = characters[Math.floor(Math.random() * characters.length)];
         ctx.fillText(text, i * fontSize, drops[i] * fontSize);
         
-        // Reset drop when it goes off screen
-        if (drops[i] * fontSize > h && Math.random() > 0.98) {
+        // Reset drop to the top randomly after it has crossed the screen
+        if (drops[i] * fontSize > h && Math.random() > 0.975) {
           drops[i] = 0;
         }
+        
+        // Move the drop down
         drops[i]++;
       }
     }
 
-    // Use setInterval for a slower, controlled frame rate
-    intervalId = setInterval(draw, 80); // ~12.5 FPS
+    intervalId = setInterval(draw, 50);
 
     return () => {
         window.removeEventListener('resize', handleResize);
@@ -70,7 +72,6 @@ const AnimatedBackground = () => {
     };
   }, []);
 
-  // `pointer-events-none` is important so it doesn't block interactions
   return <canvas ref={canvasRef} className="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none" />;
 };
 
