@@ -69,7 +69,7 @@ const AnimatedBackground = () => {
     };
   }, []);
 
-  return <canvas ref={canvasRef} className="fixed top-0 left-0 w-full h-full -z-10 blur-[1px]" />;
+  return <canvas ref={canvasRef} className="fixed top-0 left-0 w-full h-full -z-10 blur-[1px] pointer-events-none" />;
 };
 
 export default AnimatedBackground;
