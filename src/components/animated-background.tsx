@@ -14,62 +14,64 @@ const AnimatedBackground = () => {
 
     let w = canvas.width = window.innerWidth;
     let h = canvas.height = window.innerHeight;
+    
+    const fontSize = 30; // Increased for lower density
 
     const handleResize = () => {
       w = canvas.width = window.innerWidth;
       h = canvas.height = window.innerHeight;
-      // Reset columns and drops on resize
-      columns = Math.floor(w / 20);
+      columns = Math.floor(w / fontSize);
       drops = [];
       for (let i = 0; i < columns; i++) {
-        drops[i] = 1;
+        // Randomize starting position for a more organic feel
+        drops[i] = Math.floor(Math.random() * (h/fontSize));
       }
     };
     
     window.addEventListener('resize', handleResize);
 
-    let columns = Math.floor(w / 20);
+    let columns = Math.floor(w / fontSize);
     let drops: number[] = [];
     for (let i = 0; i < columns; i++) {
-      drops[i] = 1;
+        drops[i] = Math.floor(Math.random() * (h/fontSize));
     }
 
-    const str = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ@#$%^&*()_+-=[]{}|;:'<>,.?/~";
+    const str = "0123456789";
 
-    let animationFrameId: number;
+    let intervalId: ReturnType<typeof setInterval>;
 
     function draw() {
-      // Black background with trail effect
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+      // Solid black background with low opacity for a subtle trail effect, creating a "living texture"
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
       ctx.fillRect(0, 0, w, h);
       
-      // Neon pink text with glow
-      ctx.fillStyle = '#FF007F';
-      ctx.shadowColor = '#FF007F';
-      ctx.shadowBlur = 7;
-      ctx.font = '15px monospace';
+      // Soft pink color for the text
+      ctx.fillStyle = 'hsl(330, 60%, 70%)';
+      ctx.font = `${fontSize}px monospace`;
 
       for (let i = 0; i < drops.length; i++) {
         const text = str[Math.floor(Math.random() * str.length)];
-        ctx.fillText(text, i * 20, drops[i] * 20);
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
         
-        if (drops[i] * 20 > h && Math.random() > 0.975) {
+        // Reset drop when it goes off screen
+        if (drops[i] * fontSize > h && Math.random() > 0.98) {
           drops[i] = 0;
         }
         drops[i]++;
       }
-      animationFrameId = requestAnimationFrame(draw);
     }
 
-    draw();
+    // Use setInterval for a slower, controlled frame rate
+    intervalId = setInterval(draw, 80); // ~12.5 FPS
 
     return () => {
         window.removeEventListener('resize', handleResize);
-        cancelAnimationFrame(animationFrameId);
+        clearInterval(intervalId);
     };
   }, []);
 
-  return <canvas ref={canvasRef} className="fixed top-0 left-0 w-full h-full -z-10 blur-[1px] pointer-events-none" />;
+  // `pointer-events-none` is important so it doesn't block interactions
+  return <canvas ref={canvasRef} className="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none" />;
 };
 
 export default AnimatedBackground;
