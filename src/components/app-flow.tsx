@@ -18,7 +18,7 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import type { System, Sensitivity, LoginData, GeneratedSettings, AndroidSettings, IosSettings } from '@/lib/types';
+import type { System, Sensitivity, LoginData, GeneratedSettings, AndroidSettings, IosSettings, AdvancedSensitivity } from '@/lib/types';
 import { generateSettings } from '@/lib/sensitivity-generator';
 import { useCooldown } from '@/hooks/use-cooldown';
 import { AnimatedSlider } from '@/components/animated-slider';
@@ -37,8 +37,9 @@ const IPHONE_MODELS = [
     "iPhone SE (3rd generation)",
     "iPhone 14", "iPhone 14 Plus", "iPhone 14 Pro", "iPhone 14 Pro Max",
     "iPhone 15", "iPhone 15 Plus", "iPhone 15 Pro", "iPhone 15 Pro Max",
+    "iPhone 16", "iPhone 16 Plus", "iPhone 16 Pro", "iPhone 16 Pro Max",
+    "iPhone 17", "iPhone 17 Plus", "iPhone 17 Pro", "iPhone 17 Pro Max",
 ];
-
 
 const COOLDOWN_DURATION = 60 * 1000; // 60 seconds
 
@@ -56,12 +57,47 @@ const LoadingScreen = ({ message }: { message: string }) => (
     </div>
 );
 
+const AdvancedSettingSelector = ({ title, description, value, onValueChange, options }: {
+    title: string;
+    description: string;
+    value: AdvancedSensitivity;
+    onValueChange: (value: AdvancedSensitivity) => void;
+    options: AdvancedSensitivity[];
+}) => (
+    <Card className="bg-input border-border/30 p-4 space-y-3">
+        <div className="text-left">
+            <p className="font-semibold text-white">{title}</p>
+            <p className="text-sm text-muted-foreground">{description}</p>
+        </div>
+        <div className="flex justify-between space-x-2">
+            {options.map(level => (
+                <Button
+                    key={level}
+                    onClick={() => onValueChange(level)}
+                    className={`w-full transition-all duration-200 text-sm font-bold h-9 ${
+                        value === level
+                        ? 'bg-primary text-primary-foreground box-glow scale-105'
+                        : 'bg-card border border-border/50 text-muted-foreground hover:bg-muted/80'
+                    }`}
+                >
+                    {level.charAt(0).toUpperCase() + level.slice(1)}
+                </Button>
+            ))}
+        </div>
+    </Card>
+);
 
 export default function AppFlow() {
     const [step, setStep] = useState<AppStep>('login');
     const [loginData, setLoginData] = useState<LoginData | null>(null);
     const [system, setSystem] = useState<System | null>(null);
     const [sensitivity, setSensitivity] = useState<Sensitivity | null>(null);
+    
+    // New states for advanced iOS settings
+    const [mouseKeys, setMouseKeys] = useState<AdvancedSensitivity>('medio');
+    const [trackingSensitivity, setTrackingSensitivity] = useState<AdvancedSensitivity>('medio');
+    const [movementTolerance, setMovementTolerance] = useState<AdvancedSensitivity>('medio');
+
     const [generatedSettings, setGeneratedSettings] = useState<GeneratedSettings | null>(null);
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
     const [showPostGenerationNotice, setShowPostGenerationNotice] = useState(false);
@@ -145,19 +181,24 @@ export default function AppFlow() {
         setIsLogoutModalOpen(false);
     };
 
-
     const handleGenerate = () => {
-        if (!system || !sensitivity) {
-            toast({ title: "Erro", description: "Selecione o sistema e a sensibilidade.", variant: "destructive" });
+        const isIos = system === 'ios';
+        const canGenerate = (system === 'android' && sensitivity) || (isIos && sensitivity && mouseKeys && trackingSensitivity && movementTolerance);
+
+        if (!canGenerate) {
+            toast({ title: "Erro", description: "Por favor, selecione todas as opções.", variant: "destructive" });
             return;
         }
+
         if (isCoolingDown) {
             toast({ title: "Aguarde", description: `Aguarde a finalização. ${formatTime(remainingTime)} restantes.` });
             return;
         }
         
-        // Generate settings immediately, then start cooldown and show 'generating' screen for the duration of the cooldown.
-        const settings = generateSettings(system, sensitivity);
+        const settings = isIos
+            ? generateSettings(system, sensitivity!, { mouseKeys, trackingSensitivity, movementTolerance })
+            : generateSettings(system!, sensitivity!);
+        
         setGeneratedSettings(settings);
         startCooldown();
         setStep('generating');
@@ -231,6 +272,10 @@ export default function AppFlow() {
                 return <LoadingScreen message={loadingMessage} />;
 
             case 'sensitivity_select':
+                const isIos = system === 'ios';
+                const allIosOptionsSelected = isIos && sensitivity && mouseKeys && trackingSensitivity && movementTolerance;
+                const canGenerate = (system === 'android' && sensitivity) || allIosOptionsSelected;
+
                 return(
                     <div className="space-y-6 text-center">
                         <h2 className="text-3xl font-bold text-white">TIPO DE SENSIBILIDADE</h2>
@@ -251,7 +296,34 @@ export default function AppFlow() {
                                 </Card>
                             ))}
                         </div>
-                         <Button onClick={handleGenerate} disabled={!sensitivity} className="w-full text-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground py-6 box-glow disabled:opacity-50 disabled:cursor-not-allowed active:scale-95">
+
+                        {isIos && sensitivity && (
+                            <div className="space-y-4 pt-4 border-t border-border/20">
+                                <AdvancedSettingSelector
+                                    title="Teclas do Mouse"
+                                    description="Ajusta a resposta do clique e micro-movimentos da mira."
+                                    value={mouseKeys}
+                                    onValueChange={setMouseKeys}
+                                    options={['minimo', 'medio', 'maximo']}
+                                />
+                                <AdvancedSettingSelector
+                                    title="Sensibilidade de Rastreamento"
+                                    description="Define a precisão ao seguir o alvo em movimento."
+                                    value={trackingSensitivity}
+                                    onValueChange={setTrackingSensitivity}
+                                    options={['minimo', 'medio', 'maximo']}
+                                />
+                                <AdvancedSettingSelector
+                                    title="Tolerância de Movimento"
+                                    description="Controla o quanto a mira absorve movimentos bruscos."
+                                    value={movementTolerance}
+                                    onValueChange={setMovementTolerance}
+                                    options={['minimo', 'medio', 'maximo']}
+                                />
+                            </div>
+                        )}
+
+                         <Button onClick={handleGenerate} disabled={!canGenerate} className="w-full text-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground py-6 box-glow disabled:opacity-50 disabled:cursor-not-allowed active:scale-95">
                             {isCoolingDown ? `Aguarde ${formatTime(remainingTime)}` : "GERAR SENSIBILIDADE"}
                         </Button>
                     </div>

@@ -1,5 +1,6 @@
 export type System = 'android' | 'ios';
 export type Sensitivity = 'low' | 'medium' | 'high';
+export type AdvancedSensitivity = 'minimo' | 'medio' | 'maximo';
 
 export interface LoginData {
   system: System;
