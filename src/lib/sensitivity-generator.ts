@@ -104,12 +104,20 @@ const generateIosSettings = (sensitivity: Sensitivity): IosSettings => {
       min: Math.round(cursorSpeedRange.min * finalMouseMultiplier),
       max: Math.round(cursorSpeedRange.max * finalMouseMultiplier),
   };
+  cursorSpeedRange.max = Math.min(120, cursorSpeedRange.max);
+  if (cursorSpeedRange.min > cursorSpeedRange.max) {
+    cursorSpeedRange.min = cursorSpeedRange.max;
+  }
+
 
   const finalToleranceMultiplier = toleranceMultiplier[movementTolerance];
   cyclesRange = {
       min: Math.max(1, Math.round(cyclesRange.min * finalToleranceMultiplier)),
       max: Math.max(1, Math.round(cyclesRange.max * finalToleranceMultiplier)),
   };
+  cyclesRange.max = Math.min(10, cyclesRange.max);
+
+
   // Ensure min is not greater than max
   if (cyclesRange.min > cyclesRange.max) [cyclesRange.min, cyclesRange.max] = [cyclesRange.max, cyclesRange.min];
 
