@@ -24,7 +24,7 @@ import { useCooldown } from '@/hooks/use-cooldown';
 import { AnimatedSlider } from '@/components/animated-slider';
 import { Smartphone, Apple, Terminal, LogOut } from 'lucide-react';
 
-type AppStep = 'login' | 'loading' | 'system_select' | 'sensitivity_select' | 'generating' | 'results';
+type AppStep = 'login' | 'loading' | 'sensitivity_select' | 'generating' | 'results';
 
 const IPHONE_MODELS = [
     "iPhone 7", "iPhone 7 Plus",
@@ -92,13 +92,9 @@ export default function AppFlow() {
         }
 
         setLoginData({ system: systemValue, deviceModel });
+        setSystem(systemValue);
         setStep('loading');
-        setTimeout(() => setStep('system_select'), 2500);
-    };
-
-    const handleSelectSystem = (selectedSystem: System) => {
-        setSystem(selectedSystem);
-        setStep('sensitivity_select');
+        setTimeout(() => setStep('sensitivity_select'), 2500);
     };
 
     const handleSelectSensitivity = (selectedSensitivity: Sensitivity) => {
@@ -197,23 +193,6 @@ export default function AppFlow() {
 
             case 'loading':
                 return <LoadingScreen message="Inicializando sistema KIZARU..." />;
-
-            case 'system_select':
-                return (
-                    <div className="space-y-6 text-center">
-                        <h2 className="text-3xl font-bold text-white">SELECIONE O SISTEMA</h2>
-                        <div className="grid grid-cols-2 gap-4">
-                            <Button variant="outline" className={`h-32 flex flex-col gap-2 border-2 transition-all ${system === 'android' ? 'border-primary box-glow' : 'border-border/50'}`} onClick={() => handleSelectSystem('android')}>
-                                <Smartphone className="h-10 w-10"/>
-                                <span className="font-bold text-lg">ANDROID</span>
-                            </Button>
-                             <Button variant="outline" className={`h-32 flex flex-col gap-2 border-2 transition-all ${system === 'ios' ? 'border-primary box-glow' : 'border-border/50'}`} onClick={() => handleSelectSystem('ios')}>
-                                <Apple className="h-10 w-10"/>
-                                <span className="font-bold text-lg">IOS</span>
-                            </Button>
-                        </div>
-                    </div>
-                );
 
             case 'sensitivity_select':
                 return(
