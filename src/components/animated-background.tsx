@@ -34,19 +34,25 @@ const AnimatedBackground = () => {
       drops[i] = 1;
     }
 
-    const str = "0123456789";
+    const str = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ@#$%^&*()_+-=[]{}|;:'<>,.?/~";
 
     let animationFrameId: number;
 
     function draw() {
+      // Black background with trail effect
       ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
       ctx.fillRect(0, 0, w, h);
-      ctx.fillStyle = '#FF007F'; // Neon Pink
+      
+      // Neon pink text with glow
+      ctx.fillStyle = '#FF007F';
+      ctx.shadowColor = '#FF007F';
+      ctx.shadowBlur = 7;
       ctx.font = '15px monospace';
 
       for (let i = 0; i < drops.length; i++) {
         const text = str[Math.floor(Math.random() * str.length)];
         ctx.fillText(text, i * 20, drops[i] * 20);
+        
         if (drops[i] * 20 > h && Math.random() > 0.975) {
           drops[i] = 0;
         }
