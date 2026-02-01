@@ -194,7 +194,10 @@ export default function AppFlow() {
                 );
 
             case 'loading':
-                return <LoadingScreen message="Inicializando sistema KIZARU..." />;
+                const loadingMessage = system === 'ios'
+                    ? "Carregando perfil de sensibilidade iOS…"
+                    : "Carregando módulos de sensibilidade Android…";
+                return <LoadingScreen message={loadingMessage} />;
 
             case 'sensitivity_select':
                 return(
