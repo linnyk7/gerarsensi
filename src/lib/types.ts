@@ -21,6 +21,9 @@ export interface IosSettings {
   cycles: number;
   mobileCursor: string;
   mobileCursorSpeed: number;
+  mouseKeys: AdvancedSensitivity;
+  trackingSensitivity: AdvancedSensitivity;
+  movementTolerance: AdvancedSensitivity;
 }
 
 export type GeneratedSettings = AndroidSettings | IosSettings;

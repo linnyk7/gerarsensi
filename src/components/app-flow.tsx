@@ -17,12 +17,18 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
-import type { System, Sensitivity, LoginData, GeneratedSettings, AndroidSettings, IosSettings, AdvancedSensitivity } from '@/lib/types';
+import type { System, Sensitivity, LoginData, GeneratedSettings, AndroidSettings, IosSettings } from '@/lib/types';
 import { generateSettings } from '@/lib/sensitivity-generator';
 import { useCooldown } from '@/hooks/use-cooldown';
 import { AnimatedSlider } from '@/components/animated-slider';
-import { Smartphone, Apple, Terminal, LogOut, CheckCircle } from 'lucide-react';
+import { Smartphone, Apple, Terminal, LogOut, CheckCircle, Settings } from 'lucide-react';
 
 type AppStep = 'login' | 'loading' | 'sensitivity_select' | 'generating' | 'results';
 
@@ -74,47 +80,12 @@ const LoadingScreen = ({ message }: { message: string }) => (
     </div>
 );
 
-const AdvancedSettingSelector = ({ title, description, value, onValueChange, options }: {
-    title: string;
-    description: string;
-    value: AdvancedSensitivity;
-    onValueChange: (value: AdvancedSensitivity) => void;
-    options: AdvancedSensitivity[];
-}) => (
-    <Card className="bg-input border-border/30 p-4 space-y-3">
-        <div className="text-left">
-            <p className="font-semibold text-white">{title}</p>
-            <p className="text-sm text-muted-foreground">{description}</p>
-        </div>
-        <div className="flex justify-between space-x-2">
-            {options.map(level => (
-                <Button
-                    key={level}
-                    onClick={() => onValueChange(level)}
-                    className={`w-full transition-all duration-200 text-sm font-bold h-9 ${
-                        value === level
-                        ? 'bg-primary text-primary-foreground box-glow scale-105'
-                        : 'bg-card border border-border/50 text-muted-foreground hover:bg-muted/80'
-                    }`}
-                >
-                    {level.charAt(0).toUpperCase() + level.slice(1)}
-                </Button>
-            ))}
-        </div>
-    </Card>
-);
-
 export default function AppFlow() {
     const [step, setStep] = useState<AppStep>('login');
     const [loginData, setLoginData] = useState<LoginData | null>(null);
     const [system, setSystem] = useState<System | null>(null);
     const [sensitivity, setSensitivity] = useState<Sensitivity | null>(null);
     
-    // Default advanced settings for iOS generation logic, not shown to user initially
-    const [mouseKeys] = useState<AdvancedSensitivity>('medio');
-    const [trackingSensitivity] = useState<AdvancedSensitivity>('medio');
-    const [movementTolerance] = useState<AdvancedSensitivity>('medio');
-
     const [generatedSettings, setGeneratedSettings] = useState<GeneratedSettings | null>(null);
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
     const [showPostGenerationNotice, setShowPostGenerationNotice] = useState(false);
@@ -209,9 +180,7 @@ export default function AppFlow() {
             return;
         }
         
-        const settings = system === 'ios'
-            ? generateSettings(system, sensitivity, { mouseKeys, trackingSensitivity, movementTolerance })
-            : generateSettings(system!, sensitivity!);
+        const settings = generateSettings(system!, sensitivity!);
         
         setGeneratedSettings(settings);
         startCooldown();
@@ -383,15 +352,33 @@ export default function AppFlow() {
                                     <div className="p-3 bg-input rounded-lg"><p>Escala de Animação: <span className="font-bold text-primary">{(generatedSettings as AndroidSettings).animationScale}</span></p></div>
                                 </div>
                             ) : (
-                                <div className="space-y-3">
-                                    <div className="p-3 bg-input rounded-lg"><p>Escaneamento Automático: <span className="font-bold text-primary">{(generatedSettings as IosSettings).autoScan}</span></p></div>
-                                    <div className="p-3 bg-input rounded-lg"><p>Pausa: <span className="font-bold text-primary">{(generatedSettings as IosSettings).pause}</span></p></div>
-                                    <div className="p-3 bg-input rounded-lg"><p>Repetição de Movimentos: <span className="font-bold text-primary">{(generatedSettings as IosSettings).movementRepetition}</span></p></div>
-                                    <div className="p-3 bg-input rounded-lg"><p>Pressão Longa: <span className="font-bold text-primary">{(generatedSettings as IosSettings).longPress}</span></p></div>
-                                    <div className="p-3 bg-input rounded-lg"><p>Ciclos: <span className="font-bold text-primary">{(generatedSettings as IosSettings).cycles}</span></p></div>
-                                    <div className="p-3 bg-input rounded-lg"><p>Cursor Móvel: <span className="font-bold text-primary">{(generatedSettings as IosSettings).mobileCursor}</span></p></div>
-                                    <div className="p-3 bg-input rounded-lg"><p>Velocidade do Cursor Móvel: <span className="font-bold text-primary">{(generatedSettings as IosSettings).mobileCursorSpeed}</span></p></div>
-                                </div>
+                                <>
+                                    <div className="space-y-3">
+                                        <div className="p-3 bg-input rounded-lg"><p>Escaneamento Automático: <span className="font-bold text-primary">{(generatedSettings as IosSettings).autoScan}</span></p></div>
+                                        <div className="p-3 bg-input rounded-lg"><p>Pausa: <span className="font-bold text-primary">{(generatedSettings as IosSettings).pause}</span></p></div>
+                                        <div className="p-3 bg-input rounded-lg"><p>Repetição de Movimentos: <span className="font-bold text-primary">{(generatedSettings as IosSettings).movementRepetition}</span></p></div>
+                                        <div className="p-3 bg-input rounded-lg"><p>Pressão Longa: <span className="font-bold text-primary">{(generatedSettings as IosSettings).longPress}</span></p></div>
+                                        <div className="p-3 bg-input rounded-lg"><p>Ciclos: <span className="font-bold text-primary">{(generatedSettings as IosSettings).cycles}</span></p></div>
+                                        <div className="p-3 bg-input rounded-lg"><p>Cursor Móvel: <span className="font-bold text-primary">{(generatedSettings as IosSettings).mobileCursor}</span></p></div>
+                                        <div className="p-3 bg-input rounded-lg"><p>Velocidade do Cursor Móvel: <span className="font-bold text-primary">{(generatedSettings as IosSettings).mobileCursorSpeed}</span></p></div>
+                                    </div>
+                                    <Accordion type="single" collapsible className="w-full">
+                                        <AccordionItem value="item-1" className="border-b-0">
+                                            <AccordionTrigger className="p-3 bg-input rounded-lg hover:no-underline justify-start gap-2 text-sm font-semibold text-white [&[data-state=open]>svg]:text-primary">
+                                                <Settings className="h-4 w-4 transition-colors" />
+                                                <span>Configurações Adicionais</span>
+                                            </AccordionTrigger>
+                                            <AccordionContent className="pt-2 space-y-2 data-[state=open]:animate-accordion-down">
+                                                <p className="px-1 pb-1 text-xs text-muted-foreground">Essas configurações complementam a sensibilidade gerada.</p>
+                                                <div className="space-y-3 rounded-lg border border-input bg-card p-3">
+                                                    <p className="text-sm">Teclas do Mouse: <span className="font-bold capitalize text-primary">{(generatedSettings as IosSettings).mouseKeys}</span></p>
+                                                    <p className="text-sm">Sensibilidade de Rastreamento: <span className="font-bold capitalize text-primary">{(generatedSettings as IosSettings).trackingSensitivity}</span></p>
+                                                    <p className="text-sm">Tolerância de Movimento: <span className="font-bold capitalize text-primary">{(generatedSettings as IosSettings).movementTolerance}</span></p>
+                                                </div>
+                                            </AccordionContent>
+                                        </AccordionItem>
+                                    </Accordion>
+                                </>
                             )}
                             
                             <Button onClick={() => setStep('sensitivity_select')} disabled={isCoolingDown} className="w-full text-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground py-6 box-glow disabled:opacity-50 disabled:cursor-not-allowed">

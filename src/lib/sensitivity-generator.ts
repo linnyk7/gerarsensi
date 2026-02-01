@@ -33,15 +33,24 @@ const generateAndroidSettings = (sensitivity: Sensitivity): AndroidSettings => {
   };
 };
 
-interface IosAdvancedInputs {
-  mouseKeys: AdvancedSensitivity;
-  trackingSensitivity: AdvancedSensitivity;
-  movementTolerance: AdvancedSensitivity;
-}
+const generateAdvancedSetting = (sensitivity: Sensitivity): AdvancedSensitivity => {
+  const options: Record<Sensitivity, AdvancedSensitivity[]> = {
+    low: ['minimo', 'minimo', 'medio'],
+    medium: ['minimo', 'medio', 'maximo'],
+    high: ['medio', 'maximo', 'maximo'],
+  };
+  return getRandomFrom(options[sensitivity]);
+};
 
-const generateIosSettings = (sensitivity: Sensitivity, advancedSettings: IosAdvancedInputs): IosSettings => {
+const generateIosSettings = (sensitivity: Sensitivity): IosSettings => {
   let scanValues, pauseValues, repetitionValues, cursorSpeedRange;
   let cyclesRange = { min: 1, max: 10 };
+
+  const advancedSettings = {
+    mouseKeys: generateAdvancedSetting(sensitivity),
+    trackingSensitivity: generateAdvancedSetting(sensitivity),
+    movementTolerance: generateAdvancedSetting(sensitivity),
+  };
 
   const trackingMultiplier = {
     minimo: 0.8,
@@ -113,15 +122,15 @@ const generateIosSettings = (sensitivity: Sensitivity, advancedSettings: IosAdva
     cycles: getRandom(cyclesRange.min, cyclesRange.max),
     mobileCursor: getRandomFrom(['Preciso', 'Refinado', 'Individual']),
     mobileCursorSpeed: getRandom(cursorSpeedRange.min, cursorSpeedRange.max),
+    mouseKeys: advancedSettings.mouseKeys,
+    trackingSensitivity: advancedSettings.trackingSensitivity,
+    movementTolerance: advancedSettings.movementTolerance,
   };
 };
 
-export const generateSettings = (system: System, sensitivity: Sensitivity, advancedSettings?: IosAdvancedInputs): GeneratedSettings => {
+export const generateSettings = (system: System, sensitivity: Sensitivity): GeneratedSettings => {
   if (system === 'android') {
     return generateAndroidSettings(sensitivity);
   }
-  if (!advancedSettings) {
-      throw new Error("Advanced settings are required for iOS sensitivity generation.");
-  }
-  return generateIosSettings(sensitivity, advancedSettings);
+  return generateIosSettings(sensitivity);
 };
