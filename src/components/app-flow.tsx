@@ -40,7 +40,7 @@ const IPHONE_MODELS = [
 ];
 
 
-const COOLDOWN_DURATION = 5 * 60 * 1000; // 5 minutes
+const COOLDOWN_DURATION = 60 * 1000; // 60 seconds
 
 const KizaruLogo = () => (
     <>
@@ -67,13 +67,47 @@ export default function AppFlow() {
     const [showPostGenerationNotice, setShowPostGenerationNotice] = useState(false);
     const { toast } = useToast();
     const { isCoolingDown, remainingTime, startCooldown } = useCooldown(COOLDOWN_DURATION);
+    const [generationStatusText, setGenerationStatusText] = useState("Analisando parâmetros do dispositivo…");
 
-    // If cooldown is active on load, jump to results/cooldown step
+    // If cooldown is active on load, jump to results (which can show the timer)
     useEffect(() => {
-        if (isCoolingDown) {
+        if (isCoolingDown && step !== 'generating') {
             setStep('results');
         }
-    }, [isCoolingDown]);
+    }, [isCoolingDown, step]);
+
+    // When cooldown ends while we are on the generating screen, move to results.
+    useEffect(() => {
+        if (step === 'generating' && !isCoolingDown && generatedSettings) {
+            setStep('results');
+            setShowPostGenerationNotice(true);
+        }
+    }, [step, isCoolingDown, generatedSettings]);
+
+    // Update status text during generation
+    useEffect(() => {
+        const phrases = [
+            "Analisando parâmetros do dispositivo…",
+            "Otimizando resposta de mira…",
+            "Finalizando calibração…",
+        ];
+
+        if (step !== 'generating') {
+            setGenerationStatusText(phrases[0]); // Reset
+            return;
+        }
+
+        const secondsLeft = Math.floor(remainingTime / 1000);
+
+        if (secondsLeft <= 20) {
+            setGenerationStatusText(phrases[2]);
+        } else if (secondsLeft <= 40) {
+            setGenerationStatusText(phrases[1]);
+        } else {
+            setGenerationStatusText(phrases[0]);
+        }
+    }, [remainingTime, step]);
+
 
     const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -118,18 +152,15 @@ export default function AppFlow() {
             return;
         }
         if (isCoolingDown) {
-            toast({ title: "Aguarde", description: "Você deve esperar o tempo de recarga terminar." });
+            toast({ title: "Aguarde", description: `Aguarde a finalização. ${formatTime(remainingTime)} restantes.` });
             return;
         }
-
+        
+        // Generate settings immediately, then start cooldown and show 'generating' screen for the duration of the cooldown.
+        const settings = generateSettings(system, sensitivity);
+        setGeneratedSettings(settings);
+        startCooldown();
         setStep('generating');
-        setTimeout(() => {
-            const settings = generateSettings(system, sensitivity);
-            setGeneratedSettings(settings);
-            startCooldown();
-            setStep('results');
-            setShowPostGenerationNotice(true);
-        }, 2000);
     };
     
     const formatTime = (ms: number) => {
@@ -220,14 +251,24 @@ export default function AppFlow() {
                                 </Card>
                             ))}
                         </div>
-                         <Button onClick={handleGenerate} disabled={!sensitivity || isCoolingDown} className="w-full text-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground py-6 box-glow disabled:opacity-50 disabled:cursor-not-allowed active:scale-95">
+                         <Button onClick={handleGenerate} disabled={!sensitivity} className="w-full text-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground py-6 box-glow disabled:opacity-50 disabled:cursor-not-allowed active:scale-95">
                             {isCoolingDown ? `Aguarde ${formatTime(remainingTime)}` : "GERAR SENSIBILIDADE"}
                         </Button>
                     </div>
                 );
             
             case 'generating':
-                return <LoadingScreen message="Calibrando sensibilidade..." />;
+                return (
+                     <div className="flex flex-col items-center justify-center text-center h-64 text-white">
+                        <Terminal className="text-primary h-12 w-12 animate-pulse mb-4" />
+                        <h2 className="text-xl font-bold mb-2">Gerando sensibilidade personalizada…</h2>
+                        <p className="text-muted-foreground mb-6 h-5">{generationStatusText}</p>
+                        <div className="text-4xl font-mono text-primary font-bold mb-6">
+                            Tempo restante: {formatTime(remainingTime)}
+                        </div>
+                        <p className="text-sm text-muted-foreground">Aguarde a finalização, não feche o painel.</p>
+                    </div>
+                );
 
             case 'results':
                 if (isCoolingDown && !generatedSettings) {
@@ -316,13 +357,13 @@ export default function AppFlow() {
                 <AlertDialogContent className="bg-card border-primary/50">
                     <AlertDialogHeader className="items-center text-center">
                         <CheckCircle className="h-10 w-10 text-primary mb-2" />
-                        <AlertDialogTitle>AVISO</AlertDialogTitle>
+                        <AlertDialogTitle>Sensibilidade gerada com sucesso.</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Após gerar a sensibilidade, basta aplicar as configurações em seu telefone, abrir o Free Fire e jogar.
+                           Agora basta aplicar as configurações no seu telefone, abrir o Free Fire e jogar.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                         <Button onClick={() => setShowPostGenerationNotice(false)} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold">ENTENDI</Button>
+                         <Button onClick={() => setShowPostGenerationNotice(false)} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold">OK, ENTENDI</Button>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
