@@ -110,10 +110,10 @@ export default function AppFlow() {
     const [system, setSystem] = useState<System | null>(null);
     const [sensitivity, setSensitivity] = useState<Sensitivity | null>(null);
     
-    // New states for advanced iOS settings - default to 'medio'
-    const [mouseKeys, setMouseKeys] = useState<AdvancedSensitivity>('medio');
-    const [trackingSensitivity, setTrackingSensitivity] = useState<AdvancedSensitivity>('medio');
-    const [movementTolerance, setMovementTolerance] = useState<AdvancedSensitivity>('medio');
+    // Default advanced settings for iOS generation logic, not shown to user initially
+    const [mouseKeys] = useState<AdvancedSensitivity>('medio');
+    const [trackingSensitivity] = useState<AdvancedSensitivity>('medio');
+    const [movementTolerance] = useState<AdvancedSensitivity>('medio');
 
     const [generatedSettings, setGeneratedSettings] = useState<GeneratedSettings | null>(null);
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
@@ -440,11 +440,11 @@ export default function AppFlow() {
                         <CheckCircle className="h-10 w-10 text-primary mb-2" />
                         <AlertDialogTitle>Sensibilidade gerada com sucesso.</AlertDialogTitle>
                         <AlertDialogDescription>
-                           Após gerar a sensibilidade, configure os valores em seu {system === 'ios' ? 'iPhone' : 'dispositivo'}, abra o Free Fire e jogue.
+                           Após gerar a sensibilidade, configure os valores em seu {system === 'ios' ? 'iPhone' : 'telefone'}, abra o Free Fire e jogue.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                         <Button onClick={() => setShowPostGenerationNotice(false)} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold">OK, ENTENDI</Button>
+                         <Button onClick={() => setShowPostGenerationNotice(false)} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold">ENTENDI</Button>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
