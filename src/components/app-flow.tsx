@@ -278,7 +278,12 @@ export default function AppFlow() {
 
                 return(
                     <div className="space-y-6 text-center">
-                        <h2 className="text-3xl font-bold text-white">TIPO DE SENSIBILIDADE</h2>
+                        <div className="flex justify-center items-center gap-3 animate-in fade-in">
+                            {system === 'ios' 
+                                ? <Apple className="h-8 w-8 text-white/90 text-glow" /> 
+                                : <Smartphone className="h-8 w-8 text-white/90 text-glow" />}
+                            <h2 className="text-3xl font-bold text-white">TIPO DE SENSIBILIDADE</h2>
+                        </div>
                         <div className="space-y-4">
                             {(['low', 'medium', 'high'] as Sensitivity[]).map(s => (
                                 <Card 
@@ -333,7 +338,12 @@ export default function AppFlow() {
                 return (
                      <div className="flex flex-col items-center justify-center text-center h-64 text-white">
                         <Terminal className="text-primary h-12 w-12 animate-pulse mb-4" />
-                        <h2 className="text-xl font-bold mb-2">Gerando sensibilidade personalizada…</h2>
+                        <div className="flex items-center justify-center gap-3">
+                            <h2 className="text-xl font-bold mb-2">Gerando sensibilidade personalizada…</h2>
+                            {system === 'ios'
+                                ? <Apple className="h-6 w-6 text-white/80" />
+                                : <Smartphone className="h-6 w-6 text-white/80" />}
+                        </div>
                         <p className="text-muted-foreground mb-6 h-5">{generationStatusText}</p>
                         <div className="text-4xl font-mono text-primary font-bold mb-6">
                             Tempo restante: {formatTime(remainingTime)}
@@ -361,7 +371,12 @@ export default function AppFlow() {
                 return (
                     <Card className="bg-card border-primary/50">
                         <CardHeader>
-                            <CardTitle className="text-center text-2xl font-bold text-glow">KIZARU • PERFIL GERADO</CardTitle>
+                            <CardTitle className="flex items-center justify-center gap-3 text-center text-2xl font-bold text-glow">
+                                <span>KIZARU • PERFIL GERADO</span>
+                                {system === 'ios'
+                                    ? <Apple className="h-6 w-6 text-white/90" />
+                                    : <Smartphone className="h-6 w-6 text-white/90" />}
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                            {isAndroid ? (
