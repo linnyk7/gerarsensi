@@ -22,7 +22,7 @@ import type { System, Sensitivity, LoginData, GeneratedSettings, AndroidSettings
 import { generateSettings } from '@/lib/sensitivity-generator';
 import { useCooldown } from '@/hooks/use-cooldown';
 import { AnimatedSlider } from '@/components/animated-slider';
-import { Smartphone, Apple, Terminal, LogOut } from 'lucide-react';
+import { Smartphone, Apple, Terminal, LogOut, CheckCircle } from 'lucide-react';
 
 type AppStep = 'login' | 'loading' | 'sensitivity_select' | 'generating' | 'results';
 
@@ -64,6 +64,7 @@ export default function AppFlow() {
     const [sensitivity, setSensitivity] = useState<Sensitivity | null>(null);
     const [generatedSettings, setGeneratedSettings] = useState<GeneratedSettings | null>(null);
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+    const [showPostGenerationNotice, setShowPostGenerationNotice] = useState(false);
     const { toast } = useToast();
     const { isCoolingDown, remainingTime, startCooldown } = useCooldown(COOLDOWN_DURATION);
 
@@ -127,6 +128,7 @@ export default function AppFlow() {
             setGeneratedSettings(settings);
             startCooldown();
             setStep('results');
+            setShowPostGenerationNotice(true);
         }, 2000);
     };
     
@@ -200,21 +202,29 @@ export default function AppFlow() {
                         <h2 className="text-3xl font-bold text-white">TIPO DE SENSIBILIDADE</h2>
                         <div className="space-y-4">
                             {(['low', 'medium', 'high'] as Sensitivity[]).map(s => (
-                                <Card key={s} onClick={() => handleSelectSensitivity(s)} className={`bg-card border-2 cursor-pointer transition-all ${sensitivity === s ? 'border-primary box-glow' : 'border-border/50'}`}>
+                                <Card 
+                                    key={s} 
+                                    onClick={() => handleSelectSensitivity(s)} 
+                                    className={`bg-card border-2 cursor-pointer transition-all duration-300 ${
+                                        sensitivity === s
+                                        ? 'border-primary box-glow transform scale-105'
+                                        : `border-border/50 ${sensitivity ? 'opacity-60' : 'opacity-100'} hover:opacity-100 hover:border-primary/80`
+                                    }`}
+                                >
                                     <CardContent className="p-4">
                                         <p className="text-lg font-semibold text-white uppercase">{`Sensi ${s === 'low' ? 'Baixa' : s === 'medium' ? 'Média' : 'Alta'}`}</p>
                                     </CardContent>
                                 </Card>
                             ))}
                         </div>
-                         <Button onClick={handleGenerate} disabled={!sensitivity || isCoolingDown} className="w-full text-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground py-6 box-glow disabled:opacity-50 disabled:cursor-not-allowed">
+                         <Button onClick={handleGenerate} disabled={!sensitivity || isCoolingDown} className="w-full text-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground py-6 box-glow disabled:opacity-50 disabled:cursor-not-allowed active:scale-95">
                             {isCoolingDown ? `Aguarde ${formatTime(remainingTime)}` : "GERAR SENSIBILIDADE"}
                         </Button>
                     </div>
                 );
             
             case 'generating':
-                return <LoadingScreen message="Calibrando perfil..." />;
+                return <LoadingScreen message="Calibrando sensibilidade..." />;
 
             case 'results':
                 if (isCoolingDown && !generatedSettings) {
@@ -259,8 +269,6 @@ export default function AppFlow() {
                                 </div>
                             )}
                             
-                            <p className="text-xs text-muted-foreground text-center pt-4">Após gerar a sensibilidade, aplique todas as configurações em seu telefone e abra o jogo.</p>
-                            
                             <Button onClick={() => setStep('sensitivity_select')} disabled={isCoolingDown} className="w-full text-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground py-6 box-glow disabled:opacity-50 disabled:cursor-not-allowed">
                                 {isCoolingDown ? `Aguarde ${formatTime(remainingTime)}` : "Gerar Novamente"}
                             </Button>
@@ -300,6 +308,22 @@ export default function AppFlow() {
                     </AlertDialogContent>
                 </AlertDialog>
             )}
+
+            <AlertDialog open={showPostGenerationNotice} onOpenChange={setShowPostGenerationNotice}>
+                <AlertDialogContent className="bg-card border-primary/50">
+                    <AlertDialogHeader className="items-center text-center">
+                        <CheckCircle className="h-10 w-10 text-primary mb-2" />
+                        <AlertDialogTitle>AVISO</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Após gerar a sensibilidade, basta aplicar as configurações em seu telefone, abrir o Free Fire e jogar.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                         <Button onClick={() => setShowPostGenerationNotice(false)} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold">ENTENDI</Button>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
             {renderStep()}
         </div>
     );
